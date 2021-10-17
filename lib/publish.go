@@ -14,7 +14,7 @@ import (
 // This will block until the server sends a confirm. Errors are
 // only returned if the push action itself fails, see UnsafePush.
 func (s *Session) Push(data []byte) error {
-	if !s.isReady {
+	if !s.IsReady() {
 		return errors.New("failed to push: not connected")
 	}
 
@@ -24,6 +24,7 @@ func (s *Session) Push(data []byte) error {
 			log.Println("Push failed. Retrying...")
 			select {
 			case <-s.done:
+				log.Println("User init close")
 				return errShutdown
 			case <-time.After(resendDelay):
 			}
@@ -46,7 +47,7 @@ func (s *Session) Push(data []byte) error {
 // No guarantees are provided for whether the server will
 // receive the message.
 func (s *Session) UnsafePush(data []byte) error {
-	if !s.isReady {
+	if !s.IsReady() {
 		return errNotConnected
 	}
 	return s.channel.Publish(
