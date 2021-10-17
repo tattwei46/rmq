@@ -13,14 +13,15 @@ import (
 func main() {
 	name := "job_queue"
 	addr := "amqp://guest:guest@localhost:5672/"
-	queue := lib.New(name, addr)
+	pubQueue := lib.New(name, addr)
+	conQueue := lib.New(name, addr)
 
-	// publisher1
+	//publisher1
 	go func() {
 		for {
 			time.Sleep(time.Second * 1)
 			mID := uuid.New().String()
-			if err := queue.Push([]byte("message from 1"), mID); err != nil {
+			if err := pubQueue.Push([]byte("message from 1"), mID); err != nil {
 				log.Printf("Push 1 %s failed: %s\n", mID, err)
 			} else {
 				log.Printf("Push 1 %s succeeded!\n", mID)
@@ -33,7 +34,7 @@ func main() {
 		for {
 			time.Sleep(time.Second * 2)
 			mID := uuid.New().String()
-			if err := queue.Push([]byte("message from 2"), mID); err != nil {
+			if err := pubQueue.Push([]byte("message from 2"), mID); err != nil {
 				log.Printf("Push 2 %s failed: %s\n", mID, err)
 			} else {
 				log.Printf("Push 2 %s succeeded!\n", mID)
@@ -46,7 +47,7 @@ func main() {
 		for {
 			time.Sleep(time.Second * 3)
 			mID := uuid.New().String()
-			if err := queue.Push([]byte("message from 3"), mID); err != nil {
+			if err := pubQueue.Push([]byte("message from 3"), mID); err != nil {
 				log.Printf("Push 3 %s failed: %s\n", mID, err)
 			} else {
 				log.Printf("Push 3 %s succeeded!\n", mID)
@@ -54,7 +55,7 @@ func main() {
 		}
 	}()
 
-	queue.Consume(context.Background())
+	conQueue.Consume(context.Background())
 
 	select {}
 }

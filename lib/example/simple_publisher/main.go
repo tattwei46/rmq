@@ -4,6 +4,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/tattwei46/rmq/lib"
 )
 
@@ -15,10 +17,11 @@ func main() {
 	// Attempt to push a message every 2 seconds
 	for {
 		time.Sleep(time.Second * 2)
-		if err := queue.Push(message); err != nil {
-			log.Printf("Push failed: %s\n", err)
+		mid := uuid.New().String()
+		if err := queue.Push(message, mid); err != nil {
+			log.Printf("Push %s failed: %s\n", mid, err)
 		} else {
-			log.Println("Push succeeded!")
+			log.Printf("Push %s succeeded!\n", mid)
 		}
 	}
 }
