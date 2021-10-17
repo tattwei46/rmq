@@ -2,6 +2,7 @@ package lib
 
 import (
 	"log"
+	"sync/atomic"
 	"time"
 
 	"github.com/streadway/amqp"
@@ -17,7 +18,7 @@ type Session struct {
 	notifyConnClose chan *amqp.Error
 	notifyChanClose chan *amqp.Error
 	notifyConfirm   chan amqp.Confirmation
-	isReady         bool
+	isReady         int32
 }
 
 // New creates a new consumer state instance, and automatically
@@ -45,7 +46,7 @@ const (
 
 func (s *Session) handleReconnect(addr string) {
 	for {
-		s.isReady = false
+		atomic.StoreInt32(&s.isReady, 0)
 		log.Println("Attempting to connect")
 		conn, err := s.connect(addr)
 		if err != nil {
@@ -94,7 +95,7 @@ func (s *Session) changeChannel(ch *amqp.Channel) {
 
 func (s *Session) handleReInit(conn *amqp.Connection) bool {
 	for {
-		s.isReady = false
+		atomic.StoreInt32(&s.isReady, 0)
 		if err := s.init(conn); err != nil {
 			log.Println("Failed to init channel. Retrying...")
 			select {
@@ -142,11 +143,19 @@ func (s *Session) init(conn *amqp.Connection) error {
 	}
 
 	s.changeChannel(ch)
-	s.isReady = true
+	atomic.StoreInt32(&s.isReady, 1)
 	log.Println("Setup completed!")
 	return nil
 }
 
 func (s *Session) IsReady() bool {
-	return s.isReady
+	return atomic.LoadInt32(&s.isReady) == 1
+}
+
+func (s *Session) NotifyChanClosed() chan *amqp.Error {
+	return s.notifyChanClose
+}
+
+func (s *Session) NotifyConnClose() chan *amqp.Error {
+	return s.notifyConnClose
 }

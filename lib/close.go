@@ -1,8 +1,10 @@
 package lib
 
+import "sync/atomic"
+
 // Close will cleanly shutdown the channel and connection.
 func (s *Session) Close() error {
-	if !s.isReady {
+	if !s.IsReady() {
 		return errAlreadyClosed
 	}
 	if err := s.channel.Close(); err != nil {
@@ -12,6 +14,6 @@ func (s *Session) Close() error {
 		return err
 	}
 	close(s.done)
-	s.isReady = false
+	atomic.StoreInt32(&s.isReady, 0)
 	return nil
 }

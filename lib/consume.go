@@ -7,7 +7,7 @@ import "github.com/streadway/amqp"
 // successfully processed, or delivery.Nack when it fails.
 // Ignoring this will cause data to build up on the server.
 func (s *Session) Stream() (<-chan amqp.Delivery, error) {
-	if !s.isReady {
+	if !s.IsReady() {
 		return nil, errNotConnected
 	}
 	return s.channel.Consume(
