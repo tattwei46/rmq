@@ -110,7 +110,7 @@ func (s *Session) handleReInit(conn *amqp.Connection) bool {
 
 		select {
 		case <-s.done:
-			log.Println("User init close.")
+			log.Println("User init close")
 			return true
 		case <-s.notifyConnClose:
 			log.Println("Connection closed. Go back to Reconnecting...")
