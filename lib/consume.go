@@ -68,8 +68,11 @@ func (s *Session) Consume(ctx context.Context) {
 					ctxCancelled = true
 					break
 				case <-s.NotifyConnClose():
+					log.Println("Source conn closed. Attempting to redo stream setup")
+					connDropped = true
+					break
 				case <-s.NotifyChanClosed():
-					log.Println("Source conn/chanel closed. Attempting to redo stream setup")
+					log.Println("Source chanel closed. Attempting to redo stream setup")
 					connDropped = true
 					break
 				}
