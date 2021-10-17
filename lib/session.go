@@ -2,7 +2,7 @@ package lib
 
 import (
 	"log"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/streadway/amqp"
@@ -18,7 +18,8 @@ type Session struct {
 	notifyConnClose chan *amqp.Error
 	notifyChanClose chan *amqp.Error
 	notifyConfirm   chan amqp.Confirmation
-	isReady         int32
+	isReady         bool
+	m               sync.Mutex
 }
 
 // New creates a new consumer state instance, and automatically
@@ -46,7 +47,11 @@ const (
 
 func (s *Session) handleReconnect(addr string) {
 	for {
-		atomic.StoreInt32(&s.isReady, 0)
+		s.m.Lock()
+		{
+			s.isReady = false
+		}
+		s.m.Unlock()
 		log.Println("Attempting to connect")
 		conn, err := s.connect(addr)
 		if err != nil {
@@ -77,26 +82,39 @@ func (s *Session) connect(addr string) (*amqp.Connection, error) {
 }
 
 func (s *Session) changeConnection(conn *amqp.Connection) {
-	s.connection = conn
-	// create chan
-	s.notifyConnClose = make(chan *amqp.Error)
-	// hook chan to listen to event
-	s.connection.NotifyClose(s.notifyConnClose)
+	s.m.Lock()
+	{
+		s.connection = conn
+		// create chan
+		s.notifyConnClose = make(chan *amqp.Error)
+		// hook chan to listen to event
+		s.connection.NotifyClose(s.notifyConnClose)
+	}
+	s.m.Unlock()
 }
 
 func (s *Session) changeChannel(ch *amqp.Channel) {
-	s.channel = ch
-	// create chan
-	s.notifyChanClose = make(chan *amqp.Error)
-	s.notifyConfirm = make(chan amqp.Confirmation, 1)
-	// hook chan to listen to several events
-	s.channel.NotifyClose(s.notifyChanClose)
-	s.channel.NotifyPublish(s.notifyConfirm)
+	s.m.Lock()
+	{
+		s.channel = ch
+		// create chan
+		s.notifyChanClose = make(chan *amqp.Error)
+		s.notifyConfirm = make(chan amqp.Confirmation, 1)
+		// hook chan to listen to several events
+		s.channel.NotifyClose(s.notifyChanClose)
+		s.channel.NotifyPublish(s.notifyConfirm)
+	}
+	s.m.Unlock()
 }
 
 func (s *Session) handleReInit(conn *amqp.Connection) bool {
 	for {
-		atomic.StoreInt32(&s.isReady, 0)
+		s.m.Lock()
+		{
+			s.isReady = false
+		}
+		s.m.Unlock()
+
 		if err := s.init(conn); err != nil {
 			log.Println("Failed to init channel. Retrying...")
 			select {
@@ -146,13 +164,18 @@ func (s *Session) init(conn *amqp.Connection) error {
 	}
 
 	s.changeChannel(ch)
-	atomic.StoreInt32(&s.isReady, 1)
+
+	s.m.Lock()
+	{
+		s.isReady = true
+	}
+	s.m.Unlock()
 	log.Println("Setup completed!")
 	return nil
 }
 
 func (s *Session) IsReady() bool {
-	return atomic.LoadInt32(&s.isReady) == 1
+	return s.isReady
 }
 
 func (s *Session) NotifyChanClosed() chan *amqp.Error {
