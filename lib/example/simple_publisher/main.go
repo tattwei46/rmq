@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/tattwei46/rmq/lib"
@@ -16,9 +16,9 @@ func main() {
 	for {
 		time.Sleep(time.Second * 2)
 		if err := queue.Push(message); err != nil {
-			fmt.Printf("Push failed: %s\n", err)
+			log.Printf("Push failed: %s\n", err)
 		} else {
-			fmt.Println("Push succeeded!")
+			log.Println("Push succeeded!")
 		}
 	}
 }
