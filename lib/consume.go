@@ -29,19 +29,17 @@ func (s *Session) Delivery() (<-chan amqp.Delivery, error) {
 
 func (s *Session) Consume(ctx context.Context) {
 	go func() {
+		var ctxCancelled bool
 		for {
+			// if context cancelled by parent, exit loop
+			if ctxCancelled {
+				return
+			}
+
 			// initialization will take some time
 			for !s.IsReady() {
 				log.Println("Consumer is not ready. Try again later...")
 				time.Sleep(reInitDelay)
-			}
-
-			// listen to any context cancellation
-			select {
-			case <-ctx.Done():
-				log.Println("Context cancelled. Ending Consume.")
-				break
-			default:
 			}
 
 			// retrieve delivery channel
@@ -52,12 +50,12 @@ func (s *Session) Consume(ctx context.Context) {
 			}
 
 			for {
-				var connDrop bool
+				var connDropped bool
 				select {
 				case msg, ok := <-delivery:
 					if !ok {
 						log.Println("Source channel closed. Attempting to redo stream setup")
-						connDrop = true
+						connDropped = true
 						break
 					}
 					if err := msg.Ack(false); err != nil {
@@ -65,14 +63,18 @@ func (s *Session) Consume(ctx context.Context) {
 						continue
 					}
 					log.Println("msg ack confirmed")
-
+				case <-ctx.Done():
+					log.Println("Context is cancelled")
+					ctxCancelled = true
+					break
 				case <-s.NotifyConnClose():
 				case <-s.NotifyChanClosed():
 					log.Println("Source conn/chanel closed. Attempting to redo stream setup")
-					connDrop = true
+					connDropped = true
 					break
 				}
-				if connDrop {
+
+				if connDropped || ctxCancelled {
 					break
 				}
 			}
