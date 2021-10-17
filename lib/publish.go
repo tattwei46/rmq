@@ -24,6 +24,7 @@ func (s *Session) Push(data []byte) error {
 			log.Println("Push failed. Retrying...")
 			select {
 			case <-s.done:
+				log.Println("User init close")
 				return errShutdown
 			case <-time.After(resendDelay):
 			}

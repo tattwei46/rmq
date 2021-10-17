@@ -13,7 +13,7 @@ func main() {
 	ctx := context.Background()
 
 	queue.Consume(ctx)
-	// blocking channel
-	done := make(chan bool)
-	<-done
+
+	// blocking statement
+	select {}
 }

@@ -53,6 +53,7 @@ func (s *Session) handleReconnect(addr string) {
 			log.Println("Failed to connect. Retrying...")
 			select {
 			case <-s.done:
+				log.Println("User init close")
 				return
 			case <-time.After(reconnectDelay):
 
@@ -100,6 +101,7 @@ func (s *Session) handleReInit(conn *amqp.Connection) bool {
 			log.Println("Failed to init channel. Retrying...")
 			select {
 			case <-s.done:
+				log.Println("User init close")
 				return true
 			case <-time.After(reInitDelay):
 			}
@@ -108,6 +110,7 @@ func (s *Session) handleReInit(conn *amqp.Connection) bool {
 
 		select {
 		case <-s.done:
+			log.Println("User init close.")
 			return true
 		case <-s.notifyConnClose:
 			log.Println("Connection closed. Go back to Reconnecting...")
