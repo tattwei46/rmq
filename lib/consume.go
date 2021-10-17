@@ -62,7 +62,7 @@ func (s *Session) Consume(ctx context.Context) {
 						log.Printf("unable to ack msg: %v\n", err)
 						continue
 					}
-					log.Println("msg ack confirmed")
+					log.Printf("Message with id %v confirmed!\n", msg.MessageId)
 				case <-ctx.Done():
 					log.Println("Context is cancelled")
 					ctxCancelled = true

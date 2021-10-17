@@ -13,13 +13,13 @@ import (
 // it continuously re-sends messages until a confirm is received.
 // This will block until the server sends a confirm. Errors are
 // only returned if the push action itself fails, see UnsafePush.
-func (s *Session) Push(data []byte) error {
+func (s *Session) Push(data []byte, messageID string) error {
 	if !s.IsReady() {
 		return errors.New("failed to push: not connected")
 	}
 
 	for {
-		err := s.UnsafePush(data)
+		err := s.UnsafePush(data, messageID)
 		if err != nil {
 			log.Println("Push failed. Retrying...")
 			select {
@@ -46,7 +46,7 @@ func (s *Session) Push(data []byte) error {
 // confirmation. It returns an error if it fails to connect.
 // No guarantees are provided for whether the server will
 // receive the message.
-func (s *Session) UnsafePush(data []byte) error {
+func (s *Session) UnsafePush(data []byte, messageID string) error {
 	if !s.IsReady() {
 		return errNotConnected
 	}
@@ -58,8 +58,7 @@ func (s *Session) UnsafePush(data []byte) error {
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        data,
-			//CorrelationId: "CorrelationId", // you can put unique msg id here
-			//MessageId:     "MessageId",  // you can put unique msg id here
+			MessageId:   messageID,
 		},
 	)
 }

@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/tattwei46/rmq/lib"
 )
 
@@ -17,10 +19,11 @@ func main() {
 	go func() {
 		for {
 			time.Sleep(time.Second * 1)
-			if err := queue.Push([]byte("message from 1")); err != nil {
-				log.Printf("Push 1failed: %s\n", err)
+			mID := uuid.New().String()
+			if err := queue.Push([]byte("message from 1"), mID); err != nil {
+				log.Printf("Push 1 %s failed: %s\n", mID, err)
 			} else {
-				log.Println("Push 1 succeeded!")
+				log.Printf("Push 1 %s succeeded!\n", mID)
 			}
 		}
 	}()
@@ -29,10 +32,11 @@ func main() {
 	go func() {
 		for {
 			time.Sleep(time.Second * 2)
-			if err := queue.Push([]byte("message from 2")); err != nil {
-				log.Printf("Push 2 failed: %s\n", err)
+			mID := uuid.New().String()
+			if err := queue.Push([]byte("message from 2"), mID); err != nil {
+				log.Printf("Push 2 %s failed: %s\n", mID, err)
 			} else {
-				log.Println("Push 2 succeeded!")
+				log.Printf("Push 2 %s succeeded!\n", mID)
 			}
 		}
 	}()
@@ -41,10 +45,11 @@ func main() {
 	go func() {
 		for {
 			time.Sleep(time.Second * 3)
-			if err := queue.Push([]byte("message from 3")); err != nil {
-				log.Printf("Push 3 failed: %s\n", err)
+			mID := uuid.New().String()
+			if err := queue.Push([]byte("message from 3"), mID); err != nil {
+				log.Printf("Push 3 %s failed: %s\n", mID, err)
 			} else {
-				log.Println("Push 3 succeeded!")
+				log.Printf("Push 3 %s succeeded!\n", mID)
 			}
 		}
 	}()
