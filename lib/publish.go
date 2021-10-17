@@ -58,6 +58,8 @@ func (s *Session) UnsafePush(data []byte) error {
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        data,
+			//CorrelationId: "CorrelationId", // you can put unique msg id here
+			//MessageId:     "MessageId",  // you can put unique msg id here
 		},
 	)
 }
